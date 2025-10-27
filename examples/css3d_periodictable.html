@@ -162,18 +162,19 @@
 			import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 
 			// Google Sign-In Handler is globally exposed but accesses module functions
-			window.handleCredentialResponse = function(response) {
+				window.handleCredentialResponse = function(response) {
 				const id_token = response.credential;
 				const user = jwt_decode(id_token); 
 				
 				console.log("User signed in as:", user.email);
 
-				// Hide login and show visualization
+				// 1. Hide login and show visualization
 				document.getElementById('google-login-area').style.display = 'none';
 				document.getElementById('visualization-area').style.display = 'block';
 
-				// Start the main Three.js application
-				startVisualization(); 
+				// 2. Start the main Three.js application 
+				// The startVisualization function is now attached to the window object in this module's scope
+				window.startVisualization(); 
 			};
 
 			// Module-level variables (accessible by all functions below)
