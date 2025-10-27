@@ -9,31 +9,31 @@
 			a {
 				color: #8ff;
 			}
-            
-            /* Centering the Login Area */
-            #google-login-area {
-                /* Full viewport coverage */
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                
-                /* Centering using flexbox */
-                display: flex;
-                flex-direction: column;
-                align-items: center; /* Center horizontally */
-                justify-content: center; /* Center vertically */
-                
-                /* Aesthetics */
-                background-color: #000; /* Match Three.js default background */
-                z-index: 9999; 
-            }
-            
-            #google-login-area h2 {
-                color: rgba(127, 255, 255, 0.75);
-                margin-bottom: 20px;
-            }
+            
+            /* Centering the Login Area */
+            #google-login-area {
+                /* Full viewport coverage */
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                
+                /* Centering using flexbox */
+                display: flex;
+                flex-direction: column;
+                align-items: center; /* Center horizontally */
+                justify-content: center; /* Center vertically */
+                
+                /* Aesthetics */
+                background-color: #000; /* Match Three.js default background */
+                z-index: 9999; 
+            }
+            
+            #google-login-area h2 {
+                color: rgba(127, 255, 255, 0.75);
+                margin-bottom: 20px;
+            }
 
 			#menu {
 				position: absolute;
@@ -105,7 +105,6 @@
 			}
 		</style>
 
-		<!-- JWT Decoder included here, outside the module -->
 		<script src="https://unpkg.com/jwt-decode/build/jwt-decode.js"></script>
 	</head>
 	<body>
@@ -113,11 +112,11 @@
 		<div id="google-login-area">
         <h2>Please Sign In to View the Visualization</h2>
         <div id="g_id_onload"
-             data-client_id="1037845695081-o0krjrtiteb8a98evmqur7bfecll6agc.apps.googleusercontent.com" 
-             data-context="signin"
+             data-client_id="1037845695081-o0krjrtiteb8a98evmqur7bfecll6agc.apps.googleusercontent.com" 
+             data-context="signin"
 			 data-ux_mode="popup"
-             data-callback="handleCredentialResponse" 
-             data-auto_prompt="false">
+             data-callback="handleCredentialResponse" 
+             data-auto_prompt="false">
         </div>
         <div class="g_id_signin"
              data-type="standard"
@@ -129,8 +128,7 @@
         </div>
     </div>
 
-		<!-- All visualization elements inside this container -->
-    <div id="visualization-area" style="display: none;">
+		    <div id="visualization-area" style="display: none;">
 			<div id="info"><a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> 3D periodic table task by Kasatria Technologies.</div>
 			<div id="container"></div>
 			<div id="menu">
@@ -141,8 +139,7 @@
 			</div>
     </div>
 	
-    <!-- Google Identity Services Library -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
 		
 		<script type="importmap">
 			{
@@ -162,7 +159,7 @@
 			import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 
 			// Google Sign-In Handler is globally exposed but accesses module functions
-				window.handleCredentialResponse = function(response) {
+			window.handleCredentialResponse = function(response) {
 				const id_token = response.credential;
 				const user = jwt_decode(id_token); 
 				
@@ -172,8 +169,8 @@
 				document.getElementById('google-login-area').style.display = 'none';
 				document.getElementById('visualization-area').style.display = 'block';
 
-				// 2. Start the main Three.js application 
-				// The startVisualization function is now attached to the window object in this module's scope
+				// 2. Start the main Three.js application 
+				// FIX: Calling the globally exposed function.
 				window.startVisualization(); 
 			};
 
@@ -305,12 +302,16 @@
 				'Og', 'Oganesson', '(294)', 18, 7
 			];
 
-			// This is the wrapper function called after login.
-			function startVisualization() {	
-				// Call init and animate *from inside* the startVisualization function
+			// FIX APPLIED HERE:
+			// 1. Rename the module-scoped wrapper function to internal name (e.g., _startVisualizationLogic).
+			function _startVisualizationLogic() {
+				// Call init and animate *from inside* the function
 				init();
-				animate(); 
+				animate(); 
 			}
+
+			// 2. Expose the function to the global window object so the Google callback can find it.
+			window.startVisualization = _startVisualizationLogic;
 
 			// All supporting functions are defined here in the module scope.
 			
