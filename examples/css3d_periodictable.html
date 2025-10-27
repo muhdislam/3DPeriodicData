@@ -147,6 +147,27 @@
 
 		<!-- Google Identity Services Library -->
 		<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+		<script>
+		    // NOTE: This function must be defined globally to be called by the GIS client library
+		    window.handleCredentialResponse = function (response) {
+		        const id_token = response.credential;
+		        const user = jwt_decode(id_token);
+		        console.log("User signed in as:", user.email);
+		
+		        // Accessing DOM elements is fine from here
+		        document.getElementById('google-login-area').style.display = 'none';
+		        document.getElementById('visualization-area').style.display = 'block';
+		
+		        // Now, call the function defined inside the module.
+		        // This relies on the module having attached startVisualization to the window object.
+		        if (window.startVisualization) {
+		            window.startVisualization();
+		        } else {
+		             console.error("startVisualization is not defined! Module loading failed or is too slow.");
+		        }
+		    };
+		</script>
 		<script type="importmap">
 			{
 			"imports": {
@@ -164,20 +185,7 @@
 			import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 
 			// Google Sign-In Handler is globally exposed but accesses module functions
-			window.handleCredentialResponse = function (response) {
-				const id_token = response.credential;
-				const user = jwt_decode(id_token);
-				console.log("User signed in as:", user.email);
-				console.error("Google Sign-In Error/Failure:", response);
-
-				// 1. Hide login and show visualization
-				document.getElementById('google-login-area').style.display = 'none';
-				document.getElementById('visualization-area').style.display = 'block';
-			};
 			
-				// 2. Start the main Three.js application 
-				// The startVisualization function is now attached to the window object in this module's scope
-				window.startVisualization();
 			
 
 
@@ -315,6 +323,9 @@
 				init();
 				animate();
 			}
+
+			// Expose startVisualization to the global scope so the handler above can call it
+    		window.startVisualization = startVisualization
 
 			// All supporting functions are defined here in the module scope.
 			function init() {
