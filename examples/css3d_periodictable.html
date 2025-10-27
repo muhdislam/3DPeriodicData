@@ -79,9 +79,35 @@
 				background-color: rgba(0,255,255,0.75);
 			}
 		</style>
+
+		<script src="https://unpkg.com/jwt-decode/build/jwt-decode.js"></script>
 	</head>
 	<body>
 
+		<div id="google-login-area" style="text-align: center; margin-top: 50px;">
+        <h2>Please Sign In to View the Visualization</h2>
+        <div id="g_id_onload"
+             data-client_id="1037845695081-o0krjrtiteb8a98evmqur7bfecll6agc.apps.googleusercontent.com" 
+             data-context="signin"
+             data-ux_mode="popup"
+             data-callback="handleCredentialResponse" 
+             data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin"
+             data-type="standard"
+             data-shape="rectangular"
+             data-theme="outline"
+             data-text="signin_with"
+             data-size="large"
+             data-logo_alignment="left">
+        </div>
+    </div>
+
+    <div id="visualization-area" style="display: none;">
+        </div>
+    
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+		
 		<div id="info"><a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> css3d - periodic table.</div>
 		<div id="container"></div>
 		<div id="menu">
@@ -101,6 +127,24 @@
 		</script>
 
 		<script type="module">
+
+			// Google Sign-In Handler & execute the visualization start.
+			window.handleCredentialResponse = function(response) {
+				const id_token = response.credential;
+				const user = jwt_decode(id_token); 
+				
+				console.log("User signed in as:", user.email);
+
+				// Hide login and show visualization
+				document.getElementById('google-login-area').style.display = 'none';
+				document.getElementById('visualization-area').style.display = 'block';
+
+				// Start the main Three.js application
+				startVisualization(); 
+			};
+
+			//WRAP ALL ORIGINAL THREE.JS CODE INTO A SINGLE FUNCTION
+			function startVisualization() {
 
 			import * as THREE from 'three';
 
@@ -235,8 +279,9 @@
 			const objects = [];
 			const targets = { table: [], sphere: [], helix: [], grid: [] };
 
-			init();
-			animate();
+// Call init and animate *from inside* the startVisualization function
+init();
+animate();
 
 			function init() {
 
@@ -432,17 +477,15 @@
 
 			function animate() {
 
-				requestAnimationFrame( animate );
+					requestAnimationFrame( animate );
 
-				TWEEN.update();
+					TWEEN.update();
 
-				controls.update();
+					controls.update();
+                    
+					renderer.render( scene, camera ); // Moved render call here from separate function to simplify
 
-			}
-
-			function render() {
-
-				renderer.render( scene, camera );
+				}
 
 			}
 
