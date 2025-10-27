@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>3d periodic table task by Kasatria Technologies </title>
+		<title>3D Periodic Table Task by Kasatria Technologies</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link type="text/css" rel="stylesheet" href="main.css">
@@ -9,6 +9,31 @@
 			a {
 				color: #8ff;
 			}
+            
+            /* Centering the Login Area */
+            #google-login-area {
+                /* Full viewport coverage */
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                
+                /* Centering using flexbox */
+                display: flex;
+                flex-direction: column;
+                align-items: center; /* Center horizontally */
+                justify-content: center; /* Center vertically */
+                
+                /* Aesthetics */
+                background-color: #000; /* Match Three.js default background */
+                z-index: 9999; 
+            }
+            
+            #google-login-area h2 {
+                color: rgba(127, 255, 255, 0.75);
+                margin-bottom: 20px;
+            }
 
 			#menu {
 				position: absolute;
@@ -80,43 +105,45 @@
 			}
 		</style>
 
+		<!-- JWT Decoder included here, outside the module -->
 		<script src="https://unpkg.com/jwt-decode/build/jwt-decode.js"></script>
 	</head>
 	<body>
 
-		<div id="google-login-area" style="text-align: center; margin-top: 50px;">
-        <h2>Please Sign In to View the Visualization</h2>
-        <div id="g_id_onload"
-             data-client_id="1037845695081-o0krjrtiteb8a98evmqur7bfecll6agc.apps.googleusercontent.com" 
-             data-context="signin"
-             data-ux_mode="popup"
-             data-callback="handleCredentialResponse" 
-             data-auto_prompt="false">
-        </div>
-        <div class="g_id_signin"
-             data-type="standard"
-             data-shape="rectangular"
-             data-theme="outline"
-             data-text="signin_with"
-             data-size="large"
-             data-logo_alignment="left">
-        </div>
-    </div>
+		<div id="google-login-area">
+        <h2>Please Sign In to View the Visualization</h2>
+        <div id="g_id_onload"
+             data-client_id="1037845695081-o0krjrtiteb8a98evmqur7bfecll6agc.apps.googleusercontent.com" 
+             data-context="signin"
+             data-ux_mode="popup"
+             data-callback="handleCredentialResponse" 
+             data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin"
+             data-type="standard"
+             data-shape="rectangular"
+             data-theme="outline"
+             data-text="signin_with"
+             data-size="large"
+             data-logo_alignment="left">
+        </div>
+    </div>
 
-    <div id="visualization-area" style="display: none;">
-        </div>
-    
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+		<!-- All visualization elements inside this container -->
+    <div id="visualization-area" style="display: none;">
+			<div id="info"><a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> css3d - periodic table.</div>
+			<div id="container"></div>
+			<div id="menu">
+				<button id="table">TABLE</button>
+				<button id="sphere">SPHERE</button>
+				<button id="helix">HELIX</button>
+				<button id="grid">GRID</button>
+			</div>
+    </div>
+	
+    <!-- Google Identity Services Library -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 		
-		<div id="info"><a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> css3d - periodic table.</div>
-		<div id="container"></div>
-		<div id="menu">
-			<button id="table">TABLE</button>
-			<button id="sphere">SPHERE</button>
-			<button id="helix">HELIX</button>
-			<button id="grid">GRID</button>
-		</div>
-
 		<script type="importmap">
 			{
 				"imports": {
@@ -128,10 +155,16 @@
 
 		<script type="module">
 
-			// Google Sign-In Handler & execute the visualization start.
+			// Imports at the top level of the module
+			import * as THREE from 'three';
+			import TWEEN from 'three/addons/libs/tween.module.js';
+			import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
+			import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
+
+			// Google Sign-In Handler is globally exposed but accesses module functions
 			window.handleCredentialResponse = function(response) {
 				const id_token = response.credential;
-				const user = jwt_decode(id_token); 
+				const user = jwt_decode(id_token); 
 				
 				console.log("User signed in as:", user.email);
 
@@ -140,18 +173,16 @@
 				document.getElementById('visualization-area').style.display = 'block';
 
 				// Start the main Three.js application
-				startVisualization(); 
+				startVisualization(); 
 			};
 
-			//WRAP ALL ORIGINAL THREE.JS CODE INTO A SINGLE FUNCTION
-			function startVisualization() {
+			// Module-level variables (accessible by all functions below)
+			let camera, scene, renderer;
+			let controls;
 
-			import * as THREE from 'three';
-
-			import TWEEN from 'three/addons/libs/tween.module.js';
-			import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
-			import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
-
+			const objects = [];
+			const targets = { table: [], sphere: [], helix: [], grid: [] };
+			
 			const table = [
 				'H', 'Hydrogen', '1.00794', 1, 1,
 				'He', 'Helium', '4.002602', 18, 1,
@@ -273,16 +304,15 @@
 				'Og', 'Oganesson', '(294)', 18, 7
 			];
 
-			let camera, scene, renderer;
-			let controls;
+			// This is the wrapper function called after login.
+			function startVisualization() {	
+				// Call init and animate *from inside* the startVisualization function
+				init();
+				animate(); 
+			}
 
-			const objects = [];
-			const targets = { table: [], sphere: [], helix: [], grid: [] };
-
-// Call init and animate *from inside* the startVisualization function
-init();
-animate();
-
+			// All supporting functions are defined here in the module scope.
+			
 			function init() {
 
 				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 10000 );
@@ -389,6 +419,7 @@ animate();
 
 				//
 
+				// Renderer setup targets the 'container' div inside the visualization-area
 				renderer = new CSS3DRenderer();
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				document.getElementById( 'container' ).appendChild( renderer.domElement );
@@ -482,11 +513,13 @@ animate();
 					TWEEN.update();
 
 					controls.update();
-                    
-					renderer.render( scene, camera ); // Moved render call here from separate function to simplify
+                    
+					render();
 
 				}
 
+			function render() {
+				renderer.render( scene, camera );
 			}
 
 		</script>
