@@ -336,12 +336,33 @@
 				for (let i = 0; i < table.length; i += 5) {
 					const element = document.createElement('div');
 					element.className = 'element';
-					element.style.backgroundColor = 'rgba(0,127,127,' + (Math.random() * 0.5 + 0.25) + ')';
+					
+					// 1. Calculate the atomic number (Z)
+					const Z = (i / 5) + 1;
 
+					// 2. Determine and apply the color class based on Z
+					let colorClass = '';
+					// Red < 40
+					if (Z < 40) {
+						colorClass = 'z-low';
+					} 
+					// Orange >= 40 AND <= 80
+					else if (Z >= 40 && Z <= 80) {
+						colorClass = 'z-mid';
+					} 
+					// Green > 80
+					else {
+						colorClass = 'z-high';
+					}
+
+					element.classList.add(colorClass);
+
+					// NOTE: The line setting random background color is intentionally omitted.
 
 					const number = document.createElement('div');
 					number.className = 'number';
-					number.textContent = (i / 5) + 1;
+					// Use the calculated Z for the number display
+					number.textContent = Z;
 					element.appendChild(number);
 
 
